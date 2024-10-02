@@ -11,6 +11,42 @@ interface RepositoryTreeNode {
   url: string;
 }
 
+interface RepositoryRawWebhook {
+  type: string;
+  id: number;
+  name: string;
+  active: boolean;
+  events: string[];
+  config: {
+    content_type: string;
+    insecure_ssl: string;
+    url: string;
+  };
+  updated_at: string;
+  created_at: string;
+  url: string;
+  test_url: string;
+  ping_url: string;
+  deliveries_url: string;
+  last_response: {
+    code?: unknown;
+    status: string;
+    message?: string;
+  };
+}
+
+interface RepositoryWebhook {
+  id: number;
+  name: string;
+  active: boolean;
+  updatedAt: string;
+  createdAt: string;
+  url: string;
+  testUrl: string;
+  pingUrl: string;
+  deliveriesUrl: string;
+}
+
 interface RepositoryTreeFileSummary extends RepositoryTreeNode {
   type: 'blob' | string;
 }
@@ -67,7 +103,7 @@ interface RepositoryDetailedData extends RepositoryData {
   visibility: RepositoryVisibility;
   filesNumber: number;
   ymlContent?: string;
-  // activeWebhooks: string;
+  activeWebhooks: Array<RepositoryWebhook>;
 }
 
 class GithubService {
@@ -77,37 +113,33 @@ class GithubService {
     this.octokit = new Octokit({ auth: personalAccessToken });
   }
 
-  public async getRepositories(): Promise<Array<RepositoryData>> {
+  private async getPaginatedData<T>(
+    path: string,
+    allowedErrors: Array<number> = [],
+    additionalParams: Record<string, string> = {}
+  ): Promise<Array<T>> {
     let page = 1;
     const maxPerPage = 100;
-    const repositories: Array<RepositoryData> = [];
+    const items: Array<T> = [];
 
     while (true) {
       try {
-        const response = (await this.octokit.request('GET /user/repos', {
-          headers: {
-            'X-GitHub-Api-Version': '2022-11-28',
+        const data = await this.requestWithAllowedErrors<Array<T>>(
+          path,
+          {
+            headers: {
+              'X-GitHub-Api-Version': '2022-11-28',
+            },
+            per_page: maxPerPage,
+            page,
+            ...additionalParams,
           },
-          per_page: maxPerPage,
-          page,
-        })) as { data: Array<RepositoryRawData> };
-
-        repositories.push(
-          ...response.data.map(
-            ({ name, size, owner: { id, login, avatar_url, url } }) => ({
-              name,
-              size,
-              owner: {
-                id,
-                login,
-                avatarUrl: avatar_url,
-                url,
-              },
-            })
-          )
+          allowedErrors
         );
 
-        if (maxPerPage > response.data.length) {
+        items.push(...data);
+
+        if (maxPerPage > data.length) {
           break;
         }
 
@@ -118,12 +150,68 @@ class GithubService {
       }
     }
 
-    return repositories;
+    return items;
+  }
+
+  public async getRepositories(): Promise<Array<RepositoryData>> {
+    const repositories =
+      await this.getPaginatedData<RepositoryDetailedRawData>('GET /user/repos');
+
+    return repositories.map(
+      ({ name, size, owner: { id, login, avatar_url, url } }) => ({
+        name,
+        size,
+        owner: {
+          id,
+          login,
+          avatarUrl: avatar_url,
+          url,
+        },
+      })
+    );
+  }
+
+  public async getWebhooks({
+    owner,
+    name,
+  }: RepositoryIdentification): Promise<Array<RepositoryWebhook>> {
+    const webhooks = await this.getPaginatedData<RepositoryRawWebhook>(
+      'GET /repos/{owner}/{repo}/hooks',
+      [404],
+      {
+        owner,
+        repo: name,
+      }
+    );
+
+    return webhooks.map(
+      ({
+        id,
+        name,
+        active,
+        created_at,
+        updated_at,
+        url,
+        test_url,
+        ping_url,
+        deliveries_url,
+      }) => ({
+        id,
+        name,
+        active,
+        updatedAt: created_at,
+        createdAt: updated_at,
+        url,
+        testUrl: test_url,
+        pingUrl: ping_url,
+        deliveriesUrl: deliveries_url,
+      })
+    );
   }
 
   private async requestWithAllowedErrors<T>(
     path: string,
-    variables: Record<string, string | Record<string, string>>,
+    variables: Record<string, number | string | Record<string, string>>,
     allowedErrors: Array<number>
   ): Promise<T> {
     try {
@@ -246,7 +334,12 @@ class GithubService {
 
     const firstYmlFile = files.find(({ path }) => path.endsWith('.yml'));
 
-    const ymlContent = firstYmlFile && await this.getTextFileContent(repoId, firstYmlFile.sha);
+    const ymlContent =
+      firstYmlFile && (await this.getTextFileContent(repoId, firstYmlFile.sha));
+
+    const webhooks = await this.getWebhooks(repoId);
+
+    const activeWebhooks = webhooks.filter(({ active }) => active);
 
     return {
       name,
@@ -260,6 +353,7 @@ class GithubService {
       visibility: VisibilityDictionary.getByRawString(visibility),
       filesNumber: files.length,
       ymlContent,
+      activeWebhooks,
     };
   }
 }

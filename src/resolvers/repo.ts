@@ -44,6 +44,36 @@ class RepoSummary {
 }
 
 @ObjectType()
+class Webhook {
+  @Field(() => ID)
+  id?: number;
+
+  @Field(() => String)
+  name?: string;
+
+  @Field(() => Boolean)
+  active?: boolean;
+
+  @Field(() => Date)
+  updatedAt?: string;
+
+  @Field(() => Date)
+  createdAt?: string;
+
+  @Field(() => String)
+  url?: string;
+
+  @Field(() => String)
+  testUrl?: string;
+
+  @Field(() => String)
+  pingUrl?: string;
+
+  @Field(() => String)
+  deliveriesUrl?: string;
+}
+
+@ObjectType()
 class RepoDetails extends RepoSummary {
   @Field(() => RepositoryVisibility)
   visibility?: RepositoryVisibility;
@@ -54,8 +84,8 @@ class RepoDetails extends RepoSummary {
   @Field(() => String, { nullable: true })
   ymlContent?: string;
 
-  @Field(() => String, { nullable: true })
-  activeWebhooks?: string;
+  @Field(() => [Webhook])
+  activeWebhooks?: Webhook[];
 }
 
 @Resolver()
