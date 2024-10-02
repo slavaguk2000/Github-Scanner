@@ -15,6 +15,7 @@
     "core-js": "^3.38.1",
     "graphql": "^16.9.0",
     "graphql-scalars": "^1.23.0",
+    "octokit": "^4.0.2",
     "type-graphql": "^2.0.0-rc.2"
   },
   "devDependencies": {
