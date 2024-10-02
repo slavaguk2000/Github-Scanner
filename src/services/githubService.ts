@@ -19,46 +19,6 @@ class GithubService {
     this.octokit = new Octokit({ auth: personalAccessToken });
   }
 
-  private async getPaginatedData<T>(
-    path: string,
-    allowedErrors: Array<number> = [],
-    additionalParams: Record<string, string> = {}
-  ): Promise<Array<T>> {
-    let page = 1;
-    const maxPerPage = 100;
-    const items: Array<T> = [];
-
-    while (true) {
-      try {
-        const data = await this.requestWithAllowedErrors<Array<T>>(
-          path,
-          {
-            headers: {
-              'X-GitHub-Api-Version': '2022-11-28',
-            },
-            per_page: maxPerPage,
-            page,
-            ...additionalParams,
-          },
-          allowedErrors
-        );
-
-        items.push(...data);
-
-        if (maxPerPage > data.length) {
-          break;
-        }
-
-        page++;
-      } catch (e) {
-        console.error(e);
-        return [];
-      }
-    }
-
-    return items;
-  }
-
   public async getRepositories(): Promise<Array<RepositoryData>> {
     const repositories =
       await this.getPaginatedData<RepositoryDetailedRawData>('GET /user/repos');
@@ -115,6 +75,39 @@ class GithubService {
     );
   }
 
+  public async getRepositoryDetails(
+    repoId: RepositoryIdentification
+  ): Promise<RepositoryDetailedData> {
+    const { name, size, owner, visibility, default_branch } =
+      await this.getRepository(repoId);
+
+    const files = await this.getFiles(repoId, default_branch);
+
+    const firstYmlFile = files.find(({ path }) => path.endsWith('.yml'));
+
+    const ymlContent =
+      firstYmlFile && (await this.getTextFileContent(repoId, firstYmlFile.sha));
+
+    const webhooks = await this.getWebhooks(repoId);
+
+    const activeWebhooks = webhooks.filter(({ active }) => active);
+
+    return {
+      name,
+      owner: {
+        id: owner.id,
+        login: owner.login,
+        url: owner.url,
+        avatarUrl: owner.avatar_url,
+      },
+      size,
+      visibility: VisibilityDictionary.getByRawString(visibility),
+      filesNumber: files.length,
+      ymlContent,
+      activeWebhooks,
+    };
+  }
+
   private async requestWithAllowedErrors<T>(
     path: string,
     variables: Record<string, number | string | Record<string, string>>,
@@ -144,6 +137,46 @@ class GithubService {
 
       throw new Error('Internal Error');
     }
+  }
+
+  private async getPaginatedData<T>(
+    path: string,
+    allowedErrors: Array<number> = [],
+    additionalParams: Record<string, string> = {}
+  ): Promise<Array<T>> {
+    let page = 1;
+    const maxPerPage = 100;
+    const items: Array<T> = [];
+
+    while (true) {
+      try {
+        const data = await this.requestWithAllowedErrors<Array<T>>(
+          path,
+          {
+            headers: {
+              'X-GitHub-Api-Version': '2022-11-28',
+            },
+            per_page: maxPerPage,
+            page,
+            ...additionalParams,
+          },
+          allowedErrors
+        );
+
+        items.push(...data);
+
+        if (maxPerPage > data.length) {
+          break;
+        }
+
+        page++;
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    }
+
+    return items;
   }
 
   private async getRepository({
@@ -228,39 +261,6 @@ class GithubService {
         fileData.encoding as BufferEncoding
       ).toString('utf-8')
     );
-  }
-
-  public async getRepositoryDetails(
-    repoId: RepositoryIdentification
-  ): Promise<RepositoryDetailedData> {
-    const { name, size, owner, visibility, default_branch } =
-      await this.getRepository(repoId);
-
-    const files = await this.getFiles(repoId, default_branch);
-
-    const firstYmlFile = files.find(({ path }) => path.endsWith('.yml'));
-
-    const ymlContent =
-      firstYmlFile && (await this.getTextFileContent(repoId, firstYmlFile.sha));
-
-    const webhooks = await this.getWebhooks(repoId);
-
-    const activeWebhooks = webhooks.filter(({ active }) => active);
-
-    return {
-      name,
-      owner: {
-        id: owner.id,
-        login: owner.login,
-        url: owner.url,
-        avatarUrl: owner.avatar_url,
-      },
-      size,
-      visibility: VisibilityDictionary.getByRawString(visibility),
-      filesNumber: files.length,
-      ymlContent,
-      activeWebhooks,
-    };
   }
 }
 
