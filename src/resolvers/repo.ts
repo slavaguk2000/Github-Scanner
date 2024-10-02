@@ -10,6 +10,7 @@ import {
 } from 'type-graphql';
 import GithubService from '../services/githubService';
 import { RepositoryVisibility } from '../types/repositoryTypes';
+import { TaskQueue } from '../services/TaskQueue';
 
 registerEnumType(RepositoryVisibility, {
   name: 'RepositoryVisibility',
@@ -103,10 +104,12 @@ class RepoResolver {
     @Arg('repositoryOwner', () => String) repoOwner: string,
     @Arg('repositoryName', () => String) repoName: string
   ): Promise<RepoDetails> {
-    return await new GithubService(personalAccessToken).getRepositoryDetails({
-      owner: repoOwner,
-      name: repoName,
-    });
+    return TaskQueue.getInstance().execute(() =>
+      new GithubService(personalAccessToken).getRepositoryDetails({
+        owner: repoOwner,
+        name: repoName,
+      })
+    );
   }
 }
 

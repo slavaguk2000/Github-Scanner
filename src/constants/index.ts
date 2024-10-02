@@ -1,0 +1,1 @@
+export const MAX_ASYNC_REQUESTS_COUNT = 2;
