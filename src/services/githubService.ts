@@ -14,9 +14,11 @@ import {
 
 class GithubService {
   private octokit: Octokit;
+  private githubApiVersion: string;
 
   constructor(personalAccessToken: string) {
     this.octokit = new Octokit({ auth: personalAccessToken });
+    this.githubApiVersion = '2022-11-28';
   }
 
   public async getRepositories(): Promise<Array<RepositoryData>> {
@@ -114,7 +116,12 @@ class GithubService {
     allowedErrors: Array<number>
   ): Promise<T> {
     try {
-      const response = (await this.octokit.request(path, variables)) as {
+      const response = (await this.octokit.request(path, {
+        ...variables,
+        headers: {
+          'X-GitHub-Api-Version': this.githubApiVersion,
+        },
+      })) as {
         data: T;
       };
 
@@ -153,9 +160,6 @@ class GithubService {
         const data = await this.requestWithAllowedErrors<Array<T>>(
           path,
           {
-            headers: {
-              'X-GitHub-Api-Version': '2022-11-28',
-            },
             per_page: maxPerPage,
             page,
             ...additionalParams,
@@ -188,9 +192,6 @@ class GithubService {
       {
         owner,
         repo: name,
-        headers: {
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
       },
       [301, 403, 404]
     );
@@ -207,9 +208,6 @@ class GithubService {
         repo: name,
         tree_sha: branchName,
         recursive: 'recursive',
-        headers: {
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
       },
       [404, 409, 422]
     );
@@ -240,9 +238,6 @@ class GithubService {
         owner,
         repo: name,
         file_sha: fileSha,
-        headers: {
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
       },
       [404, 409, 422]
     );
