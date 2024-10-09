@@ -6,7 +6,10 @@
  * @param {Array<number>} allowedStatuses - Array of allowed HTTP status codes.
  * @returns {string} - The error message or a default message for unrecognized errors.
  */
-export const getErrorMessage = (error: unknown, allowedStatuses: Array<number>) => {
+export const getErrorMessage = (
+  error: unknown,
+  allowedStatuses: Array<number>
+) => {
   const { response } = error as {
     response?: { data?: { status?: string; message?: string } };
   };
@@ -20,5 +23,5 @@ export const getErrorMessage = (error: unknown, allowedStatuses: Array<number>) 
     return response.data.message;
   }
 
-  return "Internal Error";
+  return 'Internal Error';
 };

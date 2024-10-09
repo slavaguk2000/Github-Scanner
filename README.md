@@ -10,17 +10,20 @@ GitHub Scanner is a robust tool designed to fetch and display repositories and d
 ## Getting Started
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/your-username/github-scanner.git
    cd github-scanner
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 3. **Install `tsx` globally** (if not already installed):
+
    ```bash
    npm install -g tsx
    ```
