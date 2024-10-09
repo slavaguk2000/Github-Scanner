@@ -23,6 +23,14 @@ export class TaskQueue {
     return TaskQueue.instance;
   }
 
+  /**
+   * Enqueues and executes asynchronous tasks up to a specified concurrency limit.
+   * Tasks are executed sequentially if they exceed the limit.
+   *
+   * @template T
+   * @param {Task<T>} task - A function representing the task to execute.
+   * @returns {Promise<T>} - The result of the task once executed.
+   */
   async execute<T>(task: Task<T>): Promise<T> {
     return new Promise((resolve, reject) => {
       const executeTask = async () => {

@@ -23,6 +23,11 @@ class GithubService {
     this.githubApiVersion = GITHUB_API_VERSION;
   }
 
+  /**
+   * Retrieves a list of all repositories for the authenticated GitHub user.
+   *
+   * @returns {Promise<Array<RepositoryData>>} - A list of repositories with basic details.
+   */
   public async getRepositories(): Promise<Array<RepositoryData>> {
     const repositories =
       await this.getPaginatedData<RepositoryDetailedRawData>('GET /user/repos');
@@ -79,6 +84,12 @@ class GithubService {
     );
   }
 
+  /**
+   * Retrieves details about a specific repository, including files and webhooks.
+   *
+   * @param {RepositoryIdentification} repoId - Object containing repository owner and name.
+   * @returns {Promise<RepositoryDetailedData>} - Detailed repository data.
+   */
   public async getRepositoryDetails(
     repoId: RepositoryIdentification
   ): Promise<RepositoryDetailedData> {
@@ -112,6 +123,14 @@ class GithubService {
     };
   }
 
+  /**
+   * Makes an API request and handles allowed error statuses by returning a custom error message.
+   *
+   * @param {string} path - GitHub API endpoint.
+   * @param {Record<string, unknown>} variables - Request variables.
+   * @param {Array<number>} allowedStatuses - Allowed error HTTP status codes.
+   * @returns {Promise<T>} - The response data from the API.
+   */
   private async requestWithAllowedErrors<T>(
     path: string,
     variables: Record<string, number | string | Record<string, string>>,

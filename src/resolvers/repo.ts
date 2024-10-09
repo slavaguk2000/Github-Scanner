@@ -91,6 +91,12 @@ class RepoDetails extends RepoSummary {
 
 @Resolver()
 class RepoResolver {
+  /**
+   * Fetches a list of repositories for the authenticated GitHub user.
+   *
+   * @param {string} personalAccessToken - The user's personal access token for GitHub API authentication.
+   * @returns {Promise<Array<RepoSummary>>} - An array of repository summaries.
+   */
   @Query(() => [RepoSummary])
   async repositories(
     @Arg('personalAccessToken', () => String) personalAccessToken: string
@@ -98,6 +104,14 @@ class RepoResolver {
     return new GithubService(personalAccessToken).getRepositories();
   }
 
+  /**
+   * Fetches detailed information for a specific repository.
+   *
+   * @param {string} personalAccessToken - The user's personal access token for GitHub API authentication.
+   * @param {string} repoOwner - The owner of the repository.
+   * @param {string} repoName - The name of the repository.
+   * @returns {Promise<RepoDetails>} - Detailed information about the repository.
+   */
   @Query(() => RepoDetails)
   async repoDetails(
     @Arg('personalAccessToken', () => String) personalAccessToken: string,
