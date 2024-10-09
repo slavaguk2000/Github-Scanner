@@ -1,4 +1,4 @@
-import { RepositoryVisibility } from '../types/repositoryTypes';
+import { RepositoryVisibility } from '../enums/repositoryEnums';
 
 export interface RepositoryTreeNode {
   path: string;

@@ -9,7 +9,7 @@ import {
   Resolver,
 } from 'type-graphql';
 import GithubService from '../services/githubService';
-import { RepositoryVisibility } from '../types/repositoryTypes';
+import { RepositoryVisibility } from '../enums/repositoryEnums';
 import { TaskQueue } from '../services/TaskQueue';
 
 registerEnumType(RepositoryVisibility, {

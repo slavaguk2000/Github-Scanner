@@ -1,4 +1,4 @@
-import { RepositoryVisibility } from '../types/repositoryTypes';
+import { RepositoryVisibility } from '../enums/repositoryEnums';
 
 export class VisibilityDictionary {
   public static getByRawString(rawString: string): RepositoryVisibility {
