@@ -16,8 +16,8 @@ jobs:
 
       - name: Check for CRLF line endings
         run: |
-          # Find files with CRLF line endings
-          if grep -Ilr $'\r' .; then
+          # Find files with CRLF line endings, ignoring the .git directory
+          if grep -Ilr $'\r' . --exclude-dir=".git"; then
             echo "Error: Files with CRLF line endings detected. Please use LF endings."
             exit 1
           else
