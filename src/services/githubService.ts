@@ -12,6 +12,7 @@ import {
   RepositoryWebhook,
 } from './types';
 import { GITHUB_API_VERSION } from '../constants';
+import { getErrorMessage } from '../utils/errorProcessing';
 
 class GithubService {
   private octokit: Octokit;
@@ -114,14 +115,12 @@ class GithubService {
   private async requestWithAllowedErrors<T>(
     path: string,
     variables: Record<string, number | string | Record<string, string>>,
-    allowedErrors: Array<number>
+    allowedStatuses: Array<number>
   ): Promise<T> {
     try {
       const response = (await this.octokit.request(path, {
         ...variables,
-        headers: {
-          'X-GitHub-Api-Version': this.githubApiVersion,
-        },
+        headers: { 'X-GitHub-Api-Version': this.githubApiVersion },
       })) as {
         data: T;
       };
@@ -130,20 +129,7 @@ class GithubService {
     } catch (error) {
       console.error(error);
 
-      const { response } = error as {
-        response?: { data?: { status?: string; message?: string } };
-      };
-
-      if (
-        (allowedErrors as Array<number | undefined>).includes(
-          Number(response?.data?.status)
-        ) &&
-        response?.data?.message
-      ) {
-        throw new Error(response.data.message);
-      }
-
-      throw new Error('Internal Error');
+      throw new Error(getErrorMessage(error, allowedStatuses));
     }
   }
 
