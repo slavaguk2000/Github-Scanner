@@ -11,6 +11,7 @@ import {
   RepositoryTreeRawData,
   RepositoryWebhook,
 } from './types';
+import { GITHUB_API_VERSION } from '../constants';
 
 class GithubService {
   private octokit: Octokit;
@@ -18,7 +19,7 @@ class GithubService {
 
   constructor(personalAccessToken: string) {
     this.octokit = new Octokit({ auth: personalAccessToken });
-    this.githubApiVersion = '2022-11-28';
+    this.githubApiVersion = GITHUB_API_VERSION;
   }
 
   public async getRepositories(): Promise<Array<RepositoryData>> {
