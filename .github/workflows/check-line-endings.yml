@@ -1,0 +1,25 @@
+name: Check Line Endings
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-crlf:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Check for CRLF line endings
+        run: |
+          # Find files with CRLF line endings
+          if grep -Ilr $'\r' .; then
+            echo "Error: Files with CRLF line endings detected. Please use LF endings."
+            exit 1
+          else
+            echo "No CRLF line endings detected."
+          fi
